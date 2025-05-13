@@ -18,9 +18,9 @@ Este é o backend do projeto **Chatbot Jurídico voltado ao Direito do Consumido
 
 ### 1. Clonar o Repositório
 
+```bash
 git clone https://github.com/SeuUsuario/Back_ChatBot.git
 cd Back_ChatBot
-
 2. Criar Ambiente Virtual (opcional, mas recomendado)
 bash
 Copiar código
