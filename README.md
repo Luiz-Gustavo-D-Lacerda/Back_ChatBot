@@ -24,38 +24,27 @@ cd Back_ChatBot
 
 2. Criar Ambiente Virtual (opcional, mas recomendado)
 
-bash
-Copiar código
 python -m venv venv
 source venv/bin/activate  # Linux/macOS
 venv\Scripts\activate     # Windows
 
 3. Instalar Dependências
 
-bash
-Copiar código
 pip install -r requirements.txt
-Se você ainda não tem o requirements.txt, crie um com o seguinte conteúdo:
 
-nginx
-Copiar código
+Se você ainda não tem o requirements.txt, crie um com o seguinte conteúdo:
 flask
 flask-cors
 openai
 python-dotenv
 
 4. Criar Arquivo .env
-
 Crie um arquivo .env na raiz do projeto com sua chave da OpenAI:
 
-ini
-Copiar código
 OPENAI_API_KEY=sua-chave-aqui
 
 5. Rodar o Servidor
 
-bash
-Copiar código
 python app.py
 A API estará disponível em http://localhost:5000.
 
