@@ -1,0 +1,24 @@
+# Ignorar o arquivo .env que contém variáveis de ambiente sensíveis
+.env
+
+# Ignorar pastas e arquivos de dependências
+/node_modules/
+
+# Ignorar arquivos de log
+*.log
+
+# Ignorar arquivos de compilação
+/dist/
+/build/
+
+# Ignorar arquivos de configuração do editor
+.vscode/
+/.idea/
+
+# Ignorar arquivos temporários
+*.tmp
+*.swp
+
+# Ignorar arquivos de cache
+/.cache/
+/.DS_Store
