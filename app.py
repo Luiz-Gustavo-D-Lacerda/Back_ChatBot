@@ -8,7 +8,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)
+
+# Configura CORS para aceitar requisições apenas do seu frontend
+CORS(app, resources={r"/perguntar": {"origins": "https://luiz-gustavo-d-lacerda.github.io"}})
 
 # Instancia o cliente OpenAI com a nova API
 client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -32,7 +34,7 @@ def home():
 def perguntar():
     data = request.get_json()
     pergunta = data.get('pergunta')
-    historico = data.get('historico', [])  # histórico opcional
+    historico = data.get('historico', [])
 
     if not pergunta:
         return jsonify({"resposta": "Desculpe, não consegui entender.", "sugestoes": []})
@@ -55,7 +57,6 @@ def perguntar():
             }
         ]
 
-        # Adiciona o histórico anterior à conversa
         for m in historico:
             mensagens.append({
                 "role": "user" if m["autor"] == "user" else "assistant",
@@ -64,7 +65,6 @@ def perguntar():
 
         mensagens.append({"role": "user", "content": pergunta})
 
-        # Gera a resposta principal
         resposta = client.chat.completions.create(
             model="gpt-4",
             messages=mensagens,
@@ -72,7 +72,6 @@ def perguntar():
             max_tokens=500
         ).choices[0].message.content.strip()
 
-        # Gera sugestões com base na conversa
         sugestao_prompt = mensagens + [
             {"role": "user", "content": "Sugira 3 possíveis próximas mensagens que o usuário possa mandar sobre esse assunto."}
         ]
@@ -84,7 +83,6 @@ def perguntar():
             max_tokens=150
         ).choices[0].message.content.strip()
 
-        # Extrai sugestões da resposta textual
         sugestoes = [s.strip("-• \n") for s in sugestao_resposta.split("\n") if s.strip()]
         sugestoes = sugestoes[:3]
 
