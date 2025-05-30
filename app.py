@@ -10,14 +10,11 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# Configuração do CORS para permitir seu frontend e localhost
+# Configuração do CORS - permite qualquer origem para facilitar testes locais,
+# e também permite credenciais (se precisar).
 CORS(
     app,
-    resources={r"/*": {"origins": [
-        "https://luiz-gustavo-d-lacerda.github.io",
-        "http://localhost",
-        "http://127.0.0.1"
-    ]}},
+    resources={r"/*": {"origins": "*"}},
     supports_credentials=True,
     methods=["GET", "POST", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization"]
@@ -38,10 +35,6 @@ def home():
           <li><code>/perguntar-openai</code> - responde com base no conhecimento da IA</li>
           <li><code>/perguntar-pdf</code> - responde com base nos documentos PDF indexados</li>
         </ul>
-        <p>Frontend disponível em:</p>
-        <a href="https://luiz-gustavo-d-lacerda.github.io/Front_chatbot/" target="_blank">
-          https://luiz-gustavo-d-lacerda.github.io/Front_chatbot/
-        </a>
       </body>
     </html>
     '''
@@ -50,7 +43,6 @@ def home():
 @app.route('/perguntar-openai', methods=['POST', 'OPTIONS'])
 def perguntar_openai():
     if request.method == 'OPTIONS':
-        # Responde ao preflight OPTIONS com sucesso e cabeçalhos CORS
         return _build_cors_preflight_response()
 
     data = request.get_json()
@@ -195,10 +187,14 @@ def perguntar_pdf():
         return _corsify_actual_response(jsonify({"resposta": "Erro ao processar a pergunta.", "sugestoes": []}))
 
 
-# Funções auxiliares para o CORS
+# Funções auxiliares para CORS com origem dinâmica
 def _build_cors_preflight_response():
     response = jsonify({'message': 'CORS preflight'})
-    response.headers.add("Access-Control-Allow-Origin", "https://luiz-gustavo-d-lacerda.github.io")
+    origin = request.headers.get('Origin')
+    if origin:
+        response.headers.add("Access-Control-Allow-Origin", origin)
+    else:
+        response.headers.add("Access-Control-Allow-Origin", "*")
     response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
     response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
     response.headers.add("Access-Control-Allow-Credentials", "true")
@@ -206,10 +202,14 @@ def _build_cors_preflight_response():
 
 
 def _corsify_actual_response(response):
-    response.headers.add("Access-Control-Allow-Origin", "https://luiz-gustavo-d-lacerda.github.io")
+    origin = request.headers.get('Origin')
+    if origin:
+        response.headers.add("Access-Control-Allow-Origin", origin)
+    else:
+        response.headers.add("Access-Control-Allow-Origin", "*")
     response.headers.add("Access-Control-Allow-Credentials", "true")
     return response
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8000)
+    app.run(host='0.0.0.0', port=8000, debug=True)
