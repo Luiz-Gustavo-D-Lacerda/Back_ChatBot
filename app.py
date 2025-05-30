@@ -39,10 +39,10 @@ def home():
     '''
 
 
-@app.route('/perguntar-openai', methods=['POST', 'OPTIONS'])
+@app.route('/perguntar-openai', methods=['GET','POST', 'OPTIONS'])
 def perguntar_openai():
-    if request.method == 'OPTIONS':
-        return _build_cors_preflight_response()
+    if request.method == 'GET':
+        return "Rota funcionando no método GET"
 
     data = request.get_json()
     pergunta = data.get('pergunta')
