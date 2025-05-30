@@ -22,3 +22,4 @@
 # Ignorar arquivos de cache
 /.cache/
 /.DS_Store
+pdfs/
