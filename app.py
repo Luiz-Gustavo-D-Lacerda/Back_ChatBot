@@ -9,9 +9,22 @@ from loader import buscar_trechos  # função de busca vetorial nos PDFs
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": ["*", "http://localhost", "http://127.0.0.1", "https://luiz-gustavo-d-lacerda.github.io"]}})
+
+# Configuração do CORS para permitir seu frontend e localhost
+CORS(
+    app,
+    resources={r"/*": {"origins": [
+        "https://luiz-gustavo-d-lacerda.github.io",
+        "http://localhost",
+        "http://127.0.0.1"
+    ]}},
+    supports_credentials=True,
+    methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"]
+)
 
 client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
 
 @app.route('/')
 def home():
@@ -33,8 +46,13 @@ def home():
     </html>
     '''
 
-@app.route('/perguntar-openai', methods=['POST'])
+
+@app.route('/perguntar-openai', methods=['POST', 'OPTIONS'])
 def perguntar_openai():
+    if request.method == 'OPTIONS':
+        # Responde ao preflight OPTIONS com sucesso e cabeçalhos CORS
+        return _build_cors_preflight_response()
+
     data = request.get_json()
     pergunta = data.get('pergunta')
     historico = data.get('historico', [])
@@ -87,24 +105,27 @@ def perguntar_openai():
         sugestoes = [s.strip("-• \n") for s in sugestao_resposta.split("\n") if s.strip()]
         sugestoes = sugestoes[:3]
 
-        return jsonify({
+        return _corsify_actual_response(jsonify({
             "resposta": resposta,
             "sugestoes": sugestoes
-        })
+        }))
 
     except Exception as e:
         print("Erro OPENAI:", e)
-        return jsonify({"resposta": "Erro ao processar a pergunta.", "sugestoes": []})
+        return _corsify_actual_response(jsonify({"resposta": "Erro ao processar a pergunta.", "sugestoes": []}))
 
 
-@app.route('/perguntar-pdf', methods=['POST'])
+@app.route('/perguntar-pdf', methods=['POST', 'OPTIONS'])
 def perguntar_pdf():
+    if request.method == 'OPTIONS':
+        return _build_cors_preflight_response()
+
     data = request.get_json()
     pergunta = data.get('pergunta')
     historico = data.get('historico', [])
 
     if not pergunta:
-        return jsonify({"resposta": "Desculpe, não consegui entender.", "sugestoes": []})
+        return _corsify_actual_response(jsonify({"resposta": "Desculpe, não consegui entender.", "sugestoes": []}))
 
     try:
         trechos = buscar_trechos(pergunta)
@@ -164,14 +185,30 @@ def perguntar_pdf():
         sugestoes = [s.strip("-• \n") for s in sugestao_resposta.split("\n") if s.strip()]
         sugestoes = sugestoes[:3]
 
-        return jsonify({
+        return _corsify_actual_response(jsonify({
             "resposta": resposta,
             "sugestoes": sugestoes
-        })
+        }))
 
     except Exception as e:
         print("Erro PDF:", e)
-        return jsonify({"resposta": "Erro ao processar a pergunta.", "sugestoes": []})
+        return _corsify_actual_response(jsonify({"resposta": "Erro ao processar a pergunta.", "sugestoes": []}))
+
+
+# Funções auxiliares para o CORS
+def _build_cors_preflight_response():
+    response = jsonify({'message': 'CORS preflight'})
+    response.headers.add("Access-Control-Allow-Origin", "https://luiz-gustavo-d-lacerda.github.io")
+    response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
+    response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
+    response.headers.add("Access-Control-Allow-Credentials", "true")
+    return response, 204
+
+
+def _corsify_actual_response(response):
+    response.headers.add("Access-Control-Allow-Origin", "https://luiz-gustavo-d-lacerda.github.io")
+    response.headers.add("Access-Control-Allow-Credentials", "true")
+    return response
 
 
 if __name__ == '__main__':
