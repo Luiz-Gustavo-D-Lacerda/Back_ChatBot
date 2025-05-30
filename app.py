@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import openai
 import os
+import traceback
 from dotenv import load_dotenv
 from loader import buscar_trechos  # função de busca vetorial nos PDFs
 
@@ -10,8 +11,6 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# Configuração do CORS - permite qualquer origem para facilitar testes locais,
-# e também permite credenciais (se precisar).
 CORS(
     app,
     resources={r"/*": {"origins": "*"}},
@@ -104,7 +103,11 @@ def perguntar_openai():
 
     except Exception as e:
         print("Erro OPENAI:", e)
-        return _corsify_actual_response(jsonify({"resposta": "Erro ao processar a pergunta.", "sugestoes": []}))
+        traceback.print_exc()
+        return _corsify_actual_response(jsonify({
+            "resposta": f"Erro ao processar: {str(e)}",
+            "sugestoes": []
+        }))
 
 
 @app.route('/perguntar-pdf', methods=['POST', 'OPTIONS'])
@@ -184,17 +187,18 @@ def perguntar_pdf():
 
     except Exception as e:
         print("Erro PDF:", e)
-        return _corsify_actual_response(jsonify({"resposta": "Erro ao processar a pergunta.", "sugestoes": []}))
+        traceback.print_exc()
+        return _corsify_actual_response(jsonify({
+            "resposta": f"Erro ao processar: {str(e)}",
+            "sugestoes": []
+        }))
 
 
-# Funções auxiliares para CORS com origem dinâmica
+# Funções auxiliares para CORS
 def _build_cors_preflight_response():
     response = jsonify({'message': 'CORS preflight'})
     origin = request.headers.get('Origin')
-    if origin:
-        response.headers.add("Access-Control-Allow-Origin", origin)
-    else:
-        response.headers.add("Access-Control-Allow-Origin", "*")
+    response.headers.add("Access-Control-Allow-Origin", origin if origin else "*")
     response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization")
     response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
     response.headers.add("Access-Control-Allow-Credentials", "true")
@@ -203,10 +207,7 @@ def _build_cors_preflight_response():
 
 def _corsify_actual_response(response):
     origin = request.headers.get('Origin')
-    if origin:
-        response.headers.add("Access-Control-Allow-Origin", origin)
-    else:
-        response.headers.add("Access-Control-Allow-Origin", "*")
+    response.headers.add("Access-Control-Allow-Origin", origin if origin else "*")
     response.headers.add("Access-Control-Allow-Credentials", "true")
     return response
 
